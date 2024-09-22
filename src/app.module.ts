@@ -10,11 +10,7 @@ import { join } from 'path';
     UserModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '',
-      database: 'qng',
+      url: process.env.DATABASE_URL,
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       synchronize: true, // À utiliser en développement seulement
     }),
