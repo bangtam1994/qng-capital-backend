@@ -7,7 +7,9 @@ async function bootstrap() {
 
   app.enableCors();
   dotenv.config();
+  const port = process.env.PORT || 3100;
 
-  await app.listen(3100);
+  await app.listen(port);
+  console.log(`Application is running on: ${port}`);
 }
 bootstrap();
