@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6", // or "esnext"
+    "module": "commonjs", // Ensure this is set to commonjs
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
