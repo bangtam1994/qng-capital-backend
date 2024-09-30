@@ -55,6 +55,10 @@ export class UserService {
     return this.usersRepository.findOne({ where: { email } });
   }
 
+  async findUserById(id: number): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
+  }
+
   async markEbookAsSent(user: User): Promise<User> {
     user.ebookSent = true;
     return this.usersRepository.save(user);
