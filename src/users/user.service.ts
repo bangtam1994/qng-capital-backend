@@ -75,7 +75,7 @@ export class UserService {
       },
     });
 
-    const pdfPath = path.join(process.cwd(), 'src/test_ebook.pdf');
+    const pdfPath = path.join(process.cwd(), 'src/ebook_supply_and_demand.pdf');
     // const htmlContent = fs.readFileSync(
     //   path.join(process.cwd(), 'src/mail_ebook.html'),
     //   'utf-8',
@@ -83,7 +83,7 @@ export class UserService {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
-      subject: 'Ton E-book QNG CAPITAL est disponible ! ',
+      subject: 'Ton E-book SUPPLY AND DEMAND QngCapital est disponible ! ',
       html: `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -149,7 +149,7 @@ export class UserService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Ton e-book de Trading Gratuit !</h1>
+            <h1>Ton e-book de Trading Gratuit Supply And Demand !</h1>
         </div>
         <p>Salut ${user.firstName},</p>
          <p>Tu as rejoins la communauté des Smart Traders, félicitations ! </p>
@@ -174,7 +174,7 @@ export class UserService {
 
         <div class="footer">
           <p>Alexandre P., fondateur de <strong>QNG Capital</strong></br></p>
-  
+          <p>www.qngcapital.com</p>
         </div>
       
     </div>
