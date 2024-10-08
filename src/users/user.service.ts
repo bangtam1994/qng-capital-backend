@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { User } from './user.entity';
 import path from 'path';
 import nodemailer from 'nodemailer';
@@ -17,25 +17,69 @@ export class UserService {
   async create(userBody: CreateUserDto): Promise<User> {
     try {
       const parsedData = CreateUserSchema.parse(userBody);
+
       const user = this.usersRepository.create(parsedData);
-      this.usersRepository.save(user);
+
+      await this.usersRepository.save(user);
+
       return user;
     } catch (error) {
-      throw new BadRequestException(error);
+      if (error instanceof QueryFailedError) {
+        if (error.driverError.code === '23505') {
+          throw new HttpException('Email already exists', HttpStatus.CONFLICT);
+        }
+      }
+
+      throw new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
+  async suscribe(body: { email: string; from: string }) {
+    const { email, from } = body;
+
+    try {
+      const newUser = await this.create({ email });
+
+      const transporter = nodemailer.createTransport({
+        host: 'ssl0.ovh.net',
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_USER,
+        subject: 'New suscriber to QNG Capital !',
+        text: `New suscriber informations : ${newUser.email}, Suscribed from : ${from}`,
+      };
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email sent: ' + info.response);
+      return newUser;
+    } catch (error) {
+      return error;
+    }
+  }
   async sendEbook(body: CreateUserDto): Promise<string> {
     const { email } = body;
 
     const user = await this.findByEmail(email);
     if (user) {
       if (user.ebookSent) {
-        return 'Ebook has already been sent to this user.';
+        await this.sendEbookEmail(user);
+        return 'Ebook has already been sent to this user, a new copie has been sent';
       } else {
         console.log('user already created, skipping creationg');
 
         await this.sendEbookEmail(user);
+        await this.markEbookAsSent(user);
+
         return 'Ebook has been sent to this user.';
       }
     } else {
@@ -66,13 +110,14 @@ export class UserService {
 
   private async sendEbookEmail(user: User) {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      port: 587,
-      secure: false,
+      host: 'ssl0.ovh.net',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      bcc: process.env.EMAIL_USER,
     });
 
     const pdfPath = path.join(process.cwd(), 'src/ebook_supply_and_demand.pdf');
@@ -81,7 +126,7 @@ export class UserService {
     //   'utf-8',
     // );
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `QNG Capital <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: 'Ton E-book SUPPLY AND DEMAND QngCapital est disponible ! ',
       html: `<!DOCTYPE html>

@@ -1,6 +1,7 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { UserService } from '../users/user.service';
+import { Product } from '../order/order.entity';
 
 @Controller('payment')
 export class PaymentController {
@@ -14,10 +15,16 @@ export class PaymentController {
     @Body('userId') userId: number,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
+    @Body('product') product: Product,
   ) {
     const user = await this.userService.findUserById(userId);
     if (!user) throw new Error('Cannot find user ');
-    return this.paymentService.createCheckoutSession(user, amount, currency);
+    return this.paymentService.createCheckoutSession(
+      user,
+      amount,
+      currency,
+      product,
+    );
   }
 
   // handle payment confirmation after the user has successfully paid with a webhook that listens to Stripe events

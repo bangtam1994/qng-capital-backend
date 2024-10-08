@@ -3,7 +3,7 @@ import { Stripe } from 'stripe';
 import { EnvService } from '../env/env.service';
 import { User } from '../users/user.entity';
 import { OrderService } from '../order/order.service';
-import { OrderStatus } from '../order/order.entity';
+import { OrderStatus, Product } from '../order/order.entity';
 import { UserService } from '../users/user.service';
 
 @Injectable()
@@ -20,7 +20,12 @@ export class PaymentService {
     });
   }
 
-  async createCheckoutSession(user: User, amount: number, currency: string) {
+  async createCheckoutSession(
+    user: User,
+    amount: number,
+    currency: string,
+    product: Product,
+  ) {
     const session = await this.stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -28,7 +33,7 @@ export class PaymentService {
           price_data: {
             currency: currency,
             product_data: {
-              name: 'Your Offer Name',
+              name: product,
             },
             unit_amount: amount,
           },
@@ -36,8 +41,8 @@ export class PaymentService {
         },
       ],
       mode: 'payment',
-      success_url: `https://qngcapital.vercel.app`,
-      cancel_url: `https://your-site.com/cancel`,
+      success_url: this.envService.get('FRONTEND_URL'),
+      cancel_url: this.envService.get('FRONTEND_URL'),
     });
     await this.orderService.createOrder(
       user,

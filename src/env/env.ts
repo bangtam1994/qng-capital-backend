@@ -5,8 +5,9 @@ export const envSchema = z.object({
   DATABASE_URL: z.coerce
     .string()
     .default('postgres://postgres@localhost:5432/qng'),
-  EMAIL_USER: z.coerce.string().default('bangtam.nguyen.1994@gmail.com'),
+  EMAIL_USER: z.coerce.string().default('contact@qngcapital.com'),
   EMAIL_PASS: z.coerce.string(),
   STRIPE_SECRET_KEY: z.coerce.string(),
+  FRONTEND_URL: z.coerce.string(),
 });
 export type Env = z.infer<typeof envSchema>;

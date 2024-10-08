@@ -12,6 +12,11 @@ export class UserController {
     return await this.usersService.create(body);
   }
 
+  @Post('suscribe')
+  async suscribe(@Body() body: { email: string; from: string }) {
+    return await this.usersService.suscribe(body);
+  }
+
   @Post('ebook')
   async sendEbook(
     @Body() body: { firstName: string; lastName: string; email: string },
