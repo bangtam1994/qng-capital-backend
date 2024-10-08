@@ -41,27 +41,36 @@ export class UserService {
     const { email, from } = body;
 
     try {
-      const newUser = await this.create({ email });
+      const user = await this.findByEmail(email);
+      if (user) {
+        console.log('User already exist, skipping creation', email);
+        return user;
+      } else {
+        const newUser = await this.create({ email });
+        console.log('New user created in db,', email);
+        const transporter = nodemailer.createTransport({
+          host: 'ssl0.ovh.net',
+          port: 465,
+          secure: true,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
 
-      const transporter = nodemailer.createTransport({
-        host: 'ssl0.ovh.net',
-        port: 465,
-        secure: true,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_USER,
-        subject: 'New suscriber to QNG Capital !',
-        text: `New suscriber informations : ${newUser.email}, Suscribed from : ${from}`,
-      };
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Email sent: ' + info.response);
-      return newUser;
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: process.env.EMAIL_USER,
+          subject: 'New suscriber to QNG Capital !',
+          text: `New suscriber informations : ${newUser.email}, Suscribed from : ${from}`,
+        };
+        const info = await transporter.sendMail(mailOptions);
+        console.log(
+          `New suscriber email ${email}, notification sent to ${process.env.EMAIL_USER}: ` +
+            info.response,
+        );
+        return newUser;
+      }
     } catch (error) {
       return error;
     }
@@ -233,6 +242,6 @@ export class UserService {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent: ' + info.response);
+    console.log(`Ebook sent to ${user.email}: ` + info.response);
   }
 }
