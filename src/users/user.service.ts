@@ -222,7 +222,7 @@ export class UserService {
         <p>N'hésite pas à me faire un retour d'expérience, et me rejoindre sur Telegram : </p>
        <p style="text-align: center;">
          
-       <a href="https://telegram.me/alxqng" class="cta-button">QNG CAPITAL</a></p>
+       <a href="https://telegram.me/+tMYzFAAxJyc5YzJk" class="cta-button">QNG CAPITAL</a></p>
         <p>Si tu as la moindre questions, n'hésite pas à me contacter à <a href="mailto:contact@qngcapital.com">contact@qngcapital.com</a>.</p>
               <p style="text-align: center;">Merci pour ta confiance et ton soutien ! </p>
 
