@@ -242,6 +242,18 @@ export class UserService {
     };
 
     const info = await transporter.sendMail(mailOptions);
+
     console.log(`Ebook sent to ${user.email}: ` + info.response);
+
+    const mailToNotifyMeOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: 'Someone requested an ebook',
+      text: `User ${user.email} has requested an ebook.`,
+    };
+    const infoNotify = await transporter.sendMail(mailToNotifyMeOptions);
+    console.log(
+      `User ${user.email} has requested an ebook ` + infoNotify.response,
+    );
   }
 }
