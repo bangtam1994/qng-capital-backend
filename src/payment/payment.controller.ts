@@ -1,7 +1,9 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Req, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { UserService } from '../users/user.service';
-import { Product } from '../order/order.entity';
+// import { Product } from '../order/order.entity';
+import { CreateSubscriptionDTO } from './payment.dto';
+import { Request, Response } from 'express';
 
 @Controller('payment')
 export class PaymentController {
@@ -10,37 +12,17 @@ export class PaymentController {
     private userService: UserService,
   ) {}
 
-  @Post('checkout')
-  async createCheckoutSession(
-    @Body('userId') userId: number,
-    @Body('amount') amount: number,
-    @Body('currency') currency: string,
-    @Body('product') product: Product,
+  @Post('subscription')
+  async createSubscription(
+    @Body()
+    body: CreateSubscriptionDTO,
   ) {
-    const user = await this.userService.findUserById(userId);
-    if (!user) throw new Error('Cannot find user ');
-    return this.paymentService.createCheckoutSession(
-      user,
-      amount,
-      currency,
-      product,
-    );
+    return this.paymentService.createSubscription(body);
   }
 
   // handle payment confirmation after the user has successfully paid with a webhook that listens to Stripe events
   @Post('webhook')
-  async handleWebhook(@Body() body: any) {
-    const event = body; // Parse the event
-
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object;
-        await this.paymentService.handlePaymentSuccess(session.id);
-        break;
-
-      // Handle other events as necessary
-      default:
-        console.warn(`Unhandled event type ${event.type}`);
-    }
+  async handleWebhook(@Req() req: Request, @Res() res: Response) {
+    return this.paymentService.handleWebook(req, res);
   }
 }

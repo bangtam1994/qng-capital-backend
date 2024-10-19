@@ -5,6 +5,7 @@ import { User } from './user.entity';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import { CreateUserDto, CreateUserSchema } from './user.dto';
+import { Order } from '../order/order.entity';
 // import fs from 'fs';
 
 @Injectable()
@@ -35,6 +36,25 @@ export class UserService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async addOrderToUser(userId: number, order: Order): Promise<User> {
+    const user = await this.findUserById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    console.log('User orders before saving:', user.orders);
+
+    if (user.orders) {
+      user.orders.push(order);
+      console.log('Pushed order to user  ! ');
+    } else {
+      user.orders = [order];
+    }
+    await this.usersRepository.save(user);
+    console.log('User orders after saving:', user.orders);
+
+    return user;
   }
 
   async suscribe(body: { email: string; from: string }) {

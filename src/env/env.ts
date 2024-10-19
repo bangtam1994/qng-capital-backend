@@ -8,6 +8,7 @@ export const envSchema = z.object({
   EMAIL_USER: z.coerce.string().default('contact@qngcapital.com'),
   EMAIL_PASS: z.coerce.string(),
   STRIPE_SECRET_KEY: z.coerce.string(),
+  STRIPE_WEBHOOK_SECRET: z.coerce.string(),
   FRONTEND_URL: z.coerce.string(),
 });
 export type Env = z.infer<typeof envSchema>;

@@ -8,9 +8,9 @@ export enum OrderStatus {
 }
 
 export enum Product {
-  SMART_SIGNALS = 'SMART_SIGNALS',
-  TRADING_ACADEMY = 'TRADING_ACADEMY',
-  ELITE_PERFORMANCE = 'ELITE_PERFORMANCE',
+  SMART_SIGNALS = 'smart_signals',
+  TRADING_ACADEMY = 'trading_academy',
+  ELITE_PERFORMANCE = 'elite_performance',
 }
 
 @Entity()
@@ -24,11 +24,14 @@ export class Order {
   @ManyToOne(() => User, (user) => user.orders)
   user?: User;
 
-  @Column()
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
   amount: number = 0;
 
   @Column()
-  currency: string = '€';
+  currency?: string = '€';
+
+  @Column()
+  stripeSubscriptionId?: string = '';
 
   @Column()
   status: OrderStatus = OrderStatus.COMPLETED;

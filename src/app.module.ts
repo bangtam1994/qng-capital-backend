@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EnvModule } from './env/env.module';
 import { PaymentModule } from './payment/payment.module';
 import { OrderModule } from './order/order.module';
+import { PaymentService } from './payment/payment.service';
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { OrderModule } from './order/order.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PaymentService],
 })
 export class AppModule {}
