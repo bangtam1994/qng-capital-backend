@@ -3,12 +3,17 @@ export const emailSmartSignals = (userName: string) => `<!doctype html>
 <html>
 <head>
   <style>
+  body {
+            font-family: Inter, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
   .header {
             background: radial-gradient(circle, rgba(15,135,113,1) 0%, rgba(113,0,159,1) 100%);;
             color: white;
           font-weight:bold;
-    font-size:24px;
-    padding:16px ;
+    padding:10px ;
             text-align: center;
             border-radius: 8px 8px 0 0;
         }
@@ -35,14 +40,14 @@ export const emailSmartSignals = (userName: string) => `<!doctype html>
                   style="text-decoration:none"
                   target="_blank"
                   ><img
-                    alt="QNG"
-                    src="https://www.qngcapital.com/assets/QNG_logo-CQh_TxNX.svg"
+                    <img src="cid:logo" 
+                    alt="Logo"
                     height="60"
                     style="height:60px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
                 /></a>
               </div>
               <div class="header">
-            <h1>Bienvenue dans la Smart Trader Family !</h1>
+            <h1>Bienvenue dans la QNG Family !</h1>
         </div> 
               <div
                 style="color:#000000;font-size:16px;font-weight:normal;text-align:left;padding:16px 24px 16px 24px"

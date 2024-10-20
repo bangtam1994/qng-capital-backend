@@ -38,6 +38,14 @@ export class UserService {
     }
   }
 
+  async updateUser(userId: number, body: Partial<User>) {
+    const user = await this.findUserById(userId);
+    if (!user) {
+      throw new Error('user not found');
+    }
+    await this.usersRepository.update(userId, body);
+    return user;
+  }
   async addOrderToUser(userId: number, order: Order): Promise<User> {
     const user = await this.findUserById(userId);
     if (!user) {

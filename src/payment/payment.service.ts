@@ -1,9 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Stripe } from 'stripe';
 import { EnvService } from '../env/env.service';
-// import { User } from '../users/user.entity';
 import { OrderService } from '../order/order.service';
-// import { OrderStatus, Product } from '../order/order.entity';
+
 import { UserService } from '../users/user.service';
 import { CreateSubscriptionDTO } from './payment.dto';
 import { OrderStatus } from '../order/order.entity';
@@ -11,6 +10,7 @@ import { Request, Response } from 'express';
 import { createOrderDTO } from '../order/order.dto';
 import nodemailer from 'nodemailer';
 import { emailSmartSignals } from './emails';
+import path from 'path';
 
 @Injectable()
 export class PaymentService {
@@ -53,6 +53,7 @@ export class PaymentService {
     } else {
       console.log('User found. Skipping user creation');
       userDb = user;
+      await this.userService.updateUser(user.id, { firstName, lastName });
     }
 
     const orderDTO: createOrderDTO = {
@@ -175,10 +176,6 @@ export class PaymentService {
   }
 
   async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-    const customerId = paymentIntent.customer as string;
-    console.log(paymentIntent);
-    const user = await this.stripe.customers.retrieve(customerId);
-    console.log('>>>>>>', user);
     const userEmail = paymentIntent.metadata.userEmail;
     const subscriptionId = paymentIntent.metadata.subscriptionId;
     const product = paymentIntent.metadata.productName;
@@ -217,12 +214,22 @@ export class PaymentService {
     console.log(
       `Sending order confirmation to ${userEmail} ${userName} for subscription ${subscriptionId}, product ${product}`,
     );
+    const imagePath = path.resolve(process.cwd(), 'images/logo_qng.png');
+
     const emailContent = emailSmartSignals(userName);
+
     const mailOptions = {
       from: `QNG Capital <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: 'Thank you for joining the Smart Trader Team! ',
       html: emailContent,
+      attachments: [
+        {
+          filename: 'logo.png',
+          path: imagePath,
+          cid: 'logo',
+        },
+      ],
     };
     await transporter.sendMail(mailOptions);
 
