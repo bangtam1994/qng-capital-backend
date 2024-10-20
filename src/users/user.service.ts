@@ -266,7 +266,7 @@ export class UserService {
     console.log(`Ebook sent to ${user.email}: ` + info.response);
 
     const mailToNotifyMeOptions = {
-      from: process.env.EMAIL_USER,
+      from: `Automatic notifier <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
       subject: 'Someone requested an ebook',
       text: `User ${user.email} has requested an ebook.`,

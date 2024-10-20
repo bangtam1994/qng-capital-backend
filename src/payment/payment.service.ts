@@ -10,6 +10,7 @@ import { OrderStatus } from '../order/order.entity';
 import { Request, Response } from 'express';
 import { createOrderDTO } from '../order/order.dto';
 import nodemailer from 'nodemailer';
+import { emailSmartSignals } from './emails';
 
 @Injectable()
 export class PaymentService {
@@ -110,6 +111,8 @@ export class PaymentService {
         metadata: {
           orderId: orderCreation.id,
           userEmail: email,
+          firstName,
+          lastName,
           productName: product,
           subscriptionId: subscription.id,
         },
@@ -173,9 +176,9 @@ export class PaymentService {
 
   async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     const customerId = paymentIntent.customer as string;
-
-    await this.stripe.customers.retrieve(customerId);
-
+    console.log(paymentIntent);
+    const user = await this.stripe.customers.retrieve(customerId);
+    console.log('>>>>>>', user);
     const userEmail = paymentIntent.metadata.userEmail;
     const subscriptionId = paymentIntent.metadata.subscriptionId;
     const product = paymentIntent.metadata.productName;
@@ -187,11 +190,17 @@ export class PaymentService {
     );
     console.log('Order marked as COMPLETED.', orderEdit);
     // Send email to the user and owner
-    await this.sendOrderConfirmationEmail(userEmail, subscriptionId, product);
+    await this.sendOrderConfirmationEmail(
+      userEmail,
+      paymentIntent.metadata.firstName,
+      subscriptionId,
+      product,
+    );
   }
 
   private async sendOrderConfirmationEmail(
     userEmail: string,
+    userName: string,
     subscriptionId: string,
     product: string,
   ) {
@@ -206,21 +215,22 @@ export class PaymentService {
     });
 
     console.log(
-      `Sending order confirmation to ${userEmail} for subscription ${subscriptionId}, product ${product}`,
+      `Sending order confirmation to ${userEmail} ${userName} for subscription ${subscriptionId}, product ${product}`,
     );
+    const emailContent = emailSmartSignals(userName);
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `QNG Capital <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: 'Thank you for joining the Smart Trader Team! ',
-      text: `Merci d'avoir opté pour mon offre ${product}! Je te contacte très vite afin de te donner l'accès à tous les éléments de l'offre : Canal Télégram, supports, etc. Reste connecté!  `,
+      html: emailContent,
     };
     await transporter.sendMail(mailOptions);
 
     const mailToNotifyMeOptions = {
-      from: process.env.EMAIL_USER,
+      from: `Automatic notifier <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
       subject: 'Someone paid an offer! ',
-      text: `User ${userEmail} has paid an offer, ${subscriptionId}, product ${product}`,
+      text: `User ${userName} with email ${userEmail} has paid an offer, ${subscriptionId}, product ${product}`,
     };
     await transporter.sendMail(mailToNotifyMeOptions);
 
