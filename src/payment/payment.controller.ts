@@ -20,6 +20,18 @@ export class PaymentController {
     return this.paymentService.createSubscription(body);
   }
 
+  @Post('create-payment-intent')
+  async createExpressCheckout(
+    @Body()
+    body: {
+      paymentMethod: string;
+      amount: number;
+      currency: string;
+    },
+  ) {
+    return this.paymentService.createPaymentIntent(body);
+  }
+
   // handle payment confirmation after the user has successfully paid with a webhook that listens to Stripe events
   @Post('webhook')
   async handleWebhook(@Req() req: Request, @Res() res: Response) {

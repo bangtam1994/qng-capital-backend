@@ -69,7 +69,7 @@ export class PaymentService {
 
     // create a stripe customer
     const customer = await this.stripe.customers.create({
-      name: firstName + ' ' + lastName,
+      name: `${firstName} ${lastName}`,
       email: email,
       metadata: { productName: product },
       payment_method: paymentMethod,
@@ -78,6 +78,7 @@ export class PaymentService {
       },
     });
     // create a stripe subscription
+
     const subscription = await this.stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
@@ -86,13 +87,8 @@ export class PaymentService {
         userEmail: email,
         productName: product.toString(),
       },
+      default_payment_method: paymentMethod,
       payment_settings: {
-        payment_method_options: {
-          card: {
-            request_three_d_secure: 'any',
-          },
-        },
-        payment_method_types: ['card'],
         save_default_payment_method: 'on_subscription',
       },
       expand: ['latest_invoice.payment_intent'],
@@ -122,7 +118,10 @@ export class PaymentService {
       // Update Order & User in db
       const orderEditSubscriptionId = await this.orderService.updateOrder(
         orderCreation.id,
-        { stripeSubscriptionId: subscription.id },
+        {
+          stripeSubscriptionId: subscription.id,
+          status: OrderStatus.COMPLETED,
+        },
       );
 
       await this.userService.addOrderToUser(userDb.id, orderEditSubscriptionId);
@@ -242,5 +241,33 @@ export class PaymentService {
     await transporter.sendMail(mailToNotifyMeOptions);
 
     console.log(`Email sent ! `);
+  }
+
+  async createPaymentIntent({
+    paymentMethod,
+    amount,
+    currency,
+  }: {
+    paymentMethod: string;
+    amount: number;
+    currency: string;
+  }): Promise<{ clientSecret: string } | undefined> {
+    try {
+      // Create the PaymentIntent with the necessary parameters
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount,
+        currency,
+        payment_method: paymentMethod,
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        setup_future_usage: 'off_session',
+      });
+
+      // Return the client_secret to the controller
+      if (paymentIntent.client_secret)
+        return { clientSecret: paymentIntent.client_secret };
+    } catch (error) {
+      console.error('Error creating PaymentIntent:', error);
+      throw new Error('Failed to create PaymentIntent');
+    }
   }
 }
