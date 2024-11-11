@@ -5,7 +5,7 @@ export const createSubscriptionDTO = z.object({
   firstName: z.string(),
   lastName: z.string(),
   email: z.string().email('Invalid email format'),
-  paymentMethod: z.string(),
+  paymentMethod: z.string().optional(),
   priceId: z.string(),
   product: z.enum([
     Product.SMART_SIGNALS,
