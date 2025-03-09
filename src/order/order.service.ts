@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderStatus } from './order.entity';
 import { createOrderDTO } from './order.dto';
+import { User } from '../users/user.entity';
+import { DeepPartial } from 'typeorm';
 
 @Injectable()
 export class OrderService {
@@ -15,15 +17,16 @@ export class OrderService {
     const { user, amount, currency, status, product, stripeSubscriptionId } =
       createOrderBody;
     const order = this.orderRepository.create({
-      user: user,
       amount,
       currency,
       status,
       product,
       stripeSubscriptionId,
       createdAt: new Date(),
-    });
-    return this.orderRepository.save(order);
+    } as DeepPartial<Order>);
+    order.user = user as User;
+    const savedOrder = await this.orderRepository.save(order);
+    return savedOrder;
   }
 
   async findByStripeId(id: string): Promise<Order | null> {

@@ -7,10 +7,15 @@ export enum OrderStatus {
   FAILED = 'FAILED',
 }
 
+// export enum Product {
+//   SMART_SIGNALS = 'smart_signals',
+//   TRADING_ACADEMY = 'trading_academy',
+//   ELITE_PERFORMANCE = 'elite_performance',
+// }
 export enum Product {
-  SMART_SIGNALS = 'smart_signals',
-  TRADING_ACADEMY = 'trading_academy',
-  ELITE_PERFORMANCE = 'elite_performance',
+  FORMATION_HTC = 'formation_htc',
+  LE_CLUB_PRIVE = 'le_club_prive',
+  MENTORAT = 'mentorship',
 }
 
 @Entity()
@@ -19,7 +24,7 @@ export class Order {
   id: number = 0;
 
   @Column({ nullable: true })
-  product: Product = Product.SMART_SIGNALS;
+  product: Product = Product.FORMATION_HTC;
 
   @ManyToOne(() => User, (user) => user.orders)
   user?: User;

@@ -33,6 +33,7 @@ export class PaymentController {
     @Req() req: RawBodyRequest<Request>,
     @Res() res: Response,
   ) {
+    console.log('Handling webhook');
     return this.paymentService.handleWebook(req, res);
   }
 
@@ -61,23 +62,23 @@ export class PaymentController {
 
   // ------------------------ NOT USED------------------------------
 
-  @Post('subscription')
-  async createSubscription(
-    @Body()
-    body: CreateSubscriptionDTO,
-  ) {
-    return this.paymentService.createSubscription(body);
-  }
+  // @Post('subscription')
+  // async createSubscription(
+  //   @Body()
+  //   body: CreateSubscriptionDTO,
+  // ) {
+  //   return this.paymentService.createSubscription(body);
+  // }
 
-  @Post('create-payment-intent')
-  async createExpressCheckout(
-    @Body()
-    body: {
-      paymentMethod: string;
-      amount: number;
-      currency: string;
-    },
-  ) {
-    return this.paymentService.createPaymentIntent(body);
-  }
+  // @Post('create-payment-intent')
+  // async createExpressCheckout(
+  //   @Body()
+  //   body: {
+  //     paymentMethod: string;
+  //     amount: number;
+  //     currency: string;
+  //   },
+  // ) {
+  //   return this.paymentService.createPaymentIntent(body);
+  // }
 }

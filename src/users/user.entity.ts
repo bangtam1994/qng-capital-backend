@@ -25,5 +25,5 @@ export class User {
   orders?: Order[];
 
   @Column({ nullable: true })
-  product?: Product = Product.SMART_SIGNALS;
+  product?: Product = Product.FORMATION_HTC;
 }

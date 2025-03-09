@@ -12,9 +12,9 @@ export const createOrderDTO = z.object({
   ]),
   stripeSubscriptionId: z.string(),
   product: z.enum([
-    Product.SMART_SIGNALS,
-    Product.ELITE_PERFORMANCE,
-    Product.TRADING_ACADEMY,
+    Product.FORMATION_HTC,
+    Product.LE_CLUB_PRIVE,
+    Product.MENTORAT,
   ]),
 });
 

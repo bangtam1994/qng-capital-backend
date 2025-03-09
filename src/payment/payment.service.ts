@@ -9,13 +9,13 @@ import { OrderService } from '../order/order.service';
 
 import { UserService } from '../users/user.service';
 import { CreateSubscriptionDTO } from './payment.dto';
-import { OrderStatus } from '../order/order.entity';
+import { OrderStatus, Product } from '../order/order.entity';
 import { Request, Response } from 'express';
 import { createOrderDTO } from '../order/order.dto';
 import nodemailer from 'nodemailer';
-import { emailSmartSignals } from './emails';
+import { emailFormationHTC } from './emails_formation_htc';
 import path from 'path';
-
+import { emailLeClubPrive } from './emails_le_club_prive';
 @Injectable()
 export class PaymentService {
   private stripe: Stripe;
@@ -35,6 +35,7 @@ export class PaymentService {
   }
 
   async createOrderAndUser(createSubscriptionDTO: CreateSubscriptionDTO) {
+    console.log('createOrderAndUser');
     const { email, lastName, firstName, product, amount } =
       createSubscriptionDTO;
     let userDb;
@@ -59,7 +60,7 @@ export class PaymentService {
       status: OrderStatus.PENDING,
       product,
     };
-
+    console.log('dto order is: ', orderDTO);
     const orderCreation = await this.orderService.createOrder(orderDTO);
     console.log('order created : ', orderCreation);
     return { orderCreation, userDb };
@@ -84,19 +85,6 @@ export class PaymentService {
     // Handle the event
 
     switch (event.type) {
-      // case 'payment_intent.succeeded':
-      //   const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
-      //   // Call a method to handle the order creation
-
-      //   await this.handlePaymentIntentSucceeded(paymentIntent);
-      //   break;
-
-      // Handle other event types here if needed
-      // case 'invoice.paid':
-      //   const invoice = event.data.object as Stripe.Invoice;
-      //   console.log('Invoice was paid!', invoice);
-      //   break;
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
         await this.handleSuccessfulCheckout(session);
@@ -108,6 +96,7 @@ export class PaymentService {
   }
 
   async handleSuccessfulCheckout(session: Stripe.Checkout.Session) {
+    console.log('handleSuccessfulCheckout', session);
     const customerEmail = session.customer_email;
     const subscriptionId = session.subscription?.toString();
     const orderId = session.metadata?.orderId;
@@ -126,6 +115,8 @@ export class PaymentService {
       stripeSubscriptionId: subscriptionId,
     });
     console.log('Order marked as COMPLETED.', orderEdit);
+    console.log('For product : ', product);
+
     // Send email to the user and owner
     await this.sendOrderConfirmationEmail(
       customerEmail,
@@ -141,6 +132,7 @@ export class PaymentService {
     subscriptionId: string,
     product: string,
   ) {
+    console.log('sendOrderConfirmationEmail>>>>');
     const transporter = nodemailer.createTransport({
       host: 'ssl0.ovh.net',
       port: 465,
@@ -156,12 +148,15 @@ export class PaymentService {
     );
     const imagePath = path.resolve(process.cwd(), 'images/logo_qng.png');
 
-    const emailContent = emailSmartSignals(userName);
+    const emailContent =
+      product === Product.FORMATION_HTC
+        ? emailFormationHTC(userName)
+        : emailLeClubPrive(userName);
 
     const mailOptions = {
-      from: `QNG Capital <${process.env.EMAIL_USER}>`,
+      from: `Honma Trading Club <${process.env.EMAIL_USER}>`,
       to: userEmail,
-      subject: 'Thank you for joining the Smart Trader Team! ',
+      subject: `Merci d'avoir rejoint la Smart Trader Team! `,
       html: emailContent,
       attachments: [
         {
@@ -176,7 +171,7 @@ export class PaymentService {
     const mailToNotifyMeOptions = {
       from: `Automatic notifier <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
-      subject: 'Someone paid an offer! ',
+      subject: 'Tu as un nouveau client !',
       text: `User ${userName} with email ${userEmail} has paid an offer, ${subscriptionId}, product ${product}`,
     };
     await transporter.sendMail(mailToNotifyMeOptions);
@@ -203,6 +198,9 @@ export class PaymentService {
         product,
         amount,
       });
+      console.log('Creating checkout session for product : ', product);
+      console.log('result is: ', result);
+
       const session = await this.stripe.checkout.sessions.create({
         // payment_method_types: ['card', 'google_pay', 'apple_pay'],
         mode: 'subscription',
@@ -271,100 +269,103 @@ export class PaymentService {
     }
   }
 
-  async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-    const userEmail = paymentIntent.metadata.userEmail;
-    const subscriptionId = paymentIntent.metadata.subscriptionId;
-    const product = paymentIntent.metadata.productName;
+  // async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  //   const userEmail = paymentIntent.metadata.userEmail;
+  //   const subscriptionId = paymentIntent.metadata.subscriptionId;
+  //   const product = paymentIntent.metadata.productName;
 
-    // Update order in the database
-    const orderEdit = await this.orderService.updateOrderStatus(
-      Number(paymentIntent.metadata.orderId),
-      OrderStatus.COMPLETED,
-    );
-    console.log('Order marked as COMPLETED.', orderEdit);
-    // Send email to the user and owner
-    await this.sendOrderConfirmationEmail(
-      userEmail,
-      paymentIntent.metadata.firstName,
-      subscriptionId,
-      product,
-    );
-  }
+  //   // Update order in the database
+  //   const orderEdit = await this.orderService.updateOrderStatus(
+  //     Number(paymentIntent.metadata.orderId),
+  //     OrderStatus.COMPLETED,
+  //   );
+  //   console.log('Order marked as COMPLETED.', orderEdit);
+  //   console.log('For product : ', product);
 
-  async createSubscription(createSubscriptionDTO: CreateSubscriptionDTO) {
-    // Create a user and an order
-    const { email, lastName, firstName, priceId, paymentMethod, product } =
-      createSubscriptionDTO;
-    const { orderCreation, userDb } = await this.createOrderAndUser(
-      createSubscriptionDTO,
-    );
+  //   // Send email to the user and owner
+  //   console.log('Sending email to user and owner');
+  //   await this.sendOrderConfirmationEmail(
+  //     userEmail,
+  //     paymentIntent.metadata.firstName,
+  //     subscriptionId,
+  //     product,
+  //   );
+  // }
 
-    // create a stripe customer
-    const customer = await this.stripe.customers.create({
-      name: `${firstName} ${lastName}`,
-      email: email,
-      metadata: { productName: product },
-      payment_method: paymentMethod,
-      invoice_settings: {
-        default_payment_method: paymentMethod,
-      },
-    });
-    // create a stripe subscription
+  // async createSubscription(createSubscriptionDTO: CreateSubscriptionDTO) {
+  //   // Create a user and an order
+  //   const { email, lastName, firstName, priceId, paymentMethod, product } =
+  //     createSubscriptionDTO;
+  //   const { orderCreation, userDb } = await this.createOrderAndUser(
+  //     createSubscriptionDTO,
+  //   );
 
-    const subscription = await this.stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: priceId }],
-      metadata: {
-        orderId: orderCreation.id,
-        userEmail: email,
-        productName: product.toString(),
-      },
-      default_payment_method: paymentMethod,
-      payment_settings: {
-        save_default_payment_method: 'on_subscription',
-      },
-      expand: ['latest_invoice.payment_intent'],
-    });
+  //   // create a stripe customer
+  //   const customer = await this.stripe.customers.create({
+  //     name: `${firstName} ${lastName}`,
+  //     email: email,
+  //     metadata: { productName: product },
+  //     payment_method: paymentMethod,
+  //     invoice_settings: {
+  //       default_payment_method: paymentMethod,
+  //     },
+  //   });
+  //   // create a stripe subscription
 
-    const latestInvoice = subscription?.latest_invoice;
+  //   const subscription = await this.stripe.subscriptions.create({
+  //     customer: customer.id,
+  //     items: [{ price: priceId }],
+  //     metadata: {
+  //       orderId: orderCreation.id,
+  //       userEmail: email,
+  //       productName: product.toString(),
+  //     },
+  //     default_payment_method: paymentMethod,
+  //     payment_settings: {
+  //       save_default_payment_method: 'on_subscription',
+  //     },
+  //     expand: ['latest_invoice.payment_intent'],
+  //   });
 
-    if (
-      latestInvoice &&
-      typeof latestInvoice === 'object' &&
-      'payment_intent' in latestInvoice
-    ) {
-      const paymentIntent =
-        latestInvoice.payment_intent as Stripe.PaymentIntent;
+  //   const latestInvoice = subscription?.latest_invoice;
 
-      await this.stripe.paymentIntents.update(paymentIntent.id, {
-        metadata: {
-          orderId: orderCreation.id,
-          userEmail: email,
-          firstName,
-          lastName,
-          productName: product,
-          subscriptionId: subscription.id,
-        },
-      });
+  //   if (
+  //     latestInvoice &&
+  //     typeof latestInvoice === 'object' &&
+  //     'payment_intent' in latestInvoice
+  //   ) {
+  //     const paymentIntent =
+  //       latestInvoice.payment_intent as Stripe.PaymentIntent;
 
-      // Update Order & User in db
-      const orderEditSubscriptionId = await this.orderService.updateOrder(
-        orderCreation.id,
-        {
-          stripeSubscriptionId: subscription.id,
-          status: OrderStatus.COMPLETED,
-        },
-      );
+  //     await this.stripe.paymentIntents.update(paymentIntent.id, {
+  //       metadata: {
+  //         orderId: orderCreation.id,
+  //         userEmail: email,
+  //         firstName,
+  //         lastName,
+  //         productName: product,
+  //         subscriptionId: subscription.id,
+  //       },
+  //     });
 
-      await this.userService.addOrderToUser(userDb.id, orderEditSubscriptionId);
+  //     // Update Order & User in db
+  //     const orderEditSubscriptionId = await this.orderService.updateOrder(
+  //       orderCreation.id,
+  //       {
+  //         stripeSubscriptionId: subscription.id,
+  //         status: OrderStatus.COMPLETED,
+  //       },
+  //     );
 
-      // return the client secret and subscription id
-      return {
-        clientSecret: paymentIntent.client_secret,
-        subscriptionId: subscription.id,
-      };
-    } else {
-      throw new Error('Failed to retrieve payment intent.');
-    }
-  }
+  //     await this.userService.addOrderToUser(userDb.id, orderEditSubscriptionId);
+
+  //     // return the client secret and subscription id
+  //     return {
+  //       clientSecret: paymentIntent.client_secret,
+  //       subscriptionId: subscription.id,
+  //     };
+  //   } else {
+  //     throw new Error('Failed to retrieve payment intent.');
+  //   }
+  // }
 }
